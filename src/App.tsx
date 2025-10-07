@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import './App.css';
-import { Board } from './components/Board';
-import type { HistoryEntry } from './types';
-import { calculateWinner, getLocation } from './utils/gameLogic';
+import { useState } from "react";
+import "./App.css";
+import { Board } from "./components/Board";
+import type { HistoryEntry } from "./types";
+import { calculateWinner, getLocation } from "./utils/gameLogic";
 
 function App() {
   // Game state
   const [history, setHistory] = useState<HistoryEntry[]>([
-    { squares: Array(9).fill(null), location: null }
+    { squares: Array(9).fill(null), location: null },
   ]);
   const [currentMove, setCurrentMove] = useState(0);
   const [isAscending, setIsAscending] = useState(true);
@@ -30,7 +30,7 @@ function App() {
 
     // Create new squares array with the move
     const nextSquares = currentSquares.slice();
-    nextSquares[squareIndex] = xIsNext ? 'X' : 'O';
+    nextSquares[squareIndex] = xIsNext ? "X" : "O";
 
     // Get location for this move (1-based indexing)
     const location = getLocation(squareIndex);
@@ -38,7 +38,7 @@ function App() {
     // Create new history (discard any future moves if we're not at the end)
     const newHistory = [
       ...history.slice(0, currentMove + 1),
-      { squares: nextSquares, location }
+      { squares: nextSquares, location },
     ];
 
     setHistory(newHistory);
@@ -62,41 +62,25 @@ function App() {
     setIsAscending(true);
   }
 
-  // Generate move list
-  const moves = history.map((step, moveIndex) => {
+  // Generate move list as table rows
+  const moveRows = history.map((step, moveIndex) => {
     const location = step.location;
-    
-    // Check if this is the current move (requirement #1)
     const isCurrent = moveIndex === currentMove;
-    
-    let description: string;
-    if (moveIndex === 0) {
-      description = 'Go to game start';
-    } else {
-      // Requirement #5: Show position as (row, col) with 1-based indexing
-      description = `Go to move #${moveIndex} (${location!.row}, ${location!.col})`;
-    }
 
-    // Requirement #1: Current move shows text, not button
-    if (isCurrent) {
-      return (
-        <li key={moveIndex}>
-          <span className="current-move">
-            You are at move #{moveIndex}
-          </span>
-        </li>
-      );
-    }
+    const player = moveIndex === 0 ? "-" : moveIndex % 2 === 0 ? "O" : "X";
+    const position =
+      moveIndex === 0 ? "-" : `(${location!.row}, ${location!.col})`;
 
-    return (
-      <li key={moveIndex}>
-        <button onClick={() => jumpTo(moveIndex)}>{description}</button>
-      </li>
-    );
+    return {
+      moveIndex,
+      player,
+      position,
+      isCurrent,
+    };
   });
 
   // Requirement #3: Apply ascending/descending sort
-  const displayedMoves = isAscending ? moves : moves.slice().reverse();
+  const displayedRows = isAscending ? moveRows : [...moveRows].reverse();
 
   // Generate status message
   let status: string;
@@ -104,9 +88,9 @@ function App() {
     status = `Winner: ${winner}`;
   } else if (isDraw) {
     // Requirement #4: Show draw message
-    status = 'Result: Draw';
+    status = "Result: Draw";
   } else {
-    status = `Next player: ${xIsNext ? 'X' : 'O'}`;
+    status = `Next player: ${xIsNext ? "X" : "O"}`;
   }
 
   return (
@@ -124,19 +108,52 @@ function App() {
           <div className="status">{status}</div>
           <div className="controls">
             <div className="restart-control">
-              <button onClick={handleRestart}>
-                🔄 New Game
-              </button>
+              <button onClick={handleRestart}>New Game</button>
             </div>
             <div className="sort-control">
               <button onClick={toggleSortOrder}>
-                {isAscending ? '↑ Ascending' : '↓ Descending'}
+                {isAscending ? "Ascending" : "Descending"}
               </button>
             </div>
           </div>
           <div className="move-history">
             <h3>Move History</h3>
-            <ol>{displayedMoves}</ol>
+            <div className="history-table-container">
+              <table className="history-table">
+                <thead>
+                  <tr>
+                    <th>Move</th>
+                    <th>Player</th>
+                    <th>Position</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayedRows.map((row) => (
+                    <tr
+                      key={row.moveIndex}
+                      className={row.isCurrent ? "current-row" : ""}
+                    >
+                      <td>{row.moveIndex}</td>
+                      <td className="player-cell">{row.player}</td>
+                      <td>{row.position}</td>
+                      <td>
+                        {row.isCurrent ? (
+                          <span className="current-badge">Current</span>
+                        ) : (
+                          <button
+                            className="jump-button"
+                            onClick={() => jumpTo(row.moveIndex)}
+                          >
+                            Jump
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
